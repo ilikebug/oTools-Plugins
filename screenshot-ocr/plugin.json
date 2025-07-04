@@ -4,7 +4,7 @@
   "description": "Screenshot OCR recognition plugin",
   "author": "oTools",
   "main": "main.js",
-  "icon": "fas fa-camera",
+  "icon": "icon.png",
   "shortName": "OCR",
   "type": "ocr",
   "ui": {
