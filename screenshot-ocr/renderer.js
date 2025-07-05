@@ -12,7 +12,7 @@ window.electronAPI.onPluginExecute = (callback) => {
 // Main plugin logic
 window.electronAPI.onPluginExecute(async (action, args) => {
   try {
-    const result = await window.electronAPI.invoke('captureAndOCR');
+    const result = await window.electronAPI.invoke('capture-and-ocr');
     if (result && result.imageData && result.text !== undefined) {
       // Prefer calling the page's displayResult function
       if (typeof window.displayResult === 'function') {
