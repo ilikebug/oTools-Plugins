@@ -10,12 +10,8 @@
     "html": "index.html",
     "title": "Screenshot OCR Result",
     "width": 900,
-    "height": 800,
-    "minWidth": 800,
-    "minHeight": 600
+    "height": 600
   },
-  "dir": "/Users/zhangye/Library/Application Support/oTools/plugins/screenshot-ocr",
-  "loadedAt": "2025-07-06T06:23:44.355Z",
   "startupMode": "independent",
   "enabled": true
 }
