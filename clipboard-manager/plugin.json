@@ -9,8 +9,9 @@
   "ui": {
     "html": "index.html",
     "title": "Clipboard Manager",
-    "width": 420,
-    "height": 600
+    "width": 300,
+    "height": 350,
+    "frame": false
   },
   "startupMode": "independent",
   "enabled": true

@@ -8,7 +8,7 @@
 </head>
 <body>
   <div class="container">
-    <header class="plugin-header">
+    <header class="plugin-header" style="-webkit-app-region: drag;">
       <div class="plugin-icon-title">
         <img src="icon.png" class="plugin-icon" alt="ClipboardManager Icon" />
         <span class="plugin-title">Clipboard Manager</span>
@@ -16,19 +16,22 @@
       <div class="plugin-version">v1.0.0</div>
     </header>
     <div class="search-bar">
-      <input type="text" placeholder="Search clipboard... (coming soon)" disabled />
+      <span class="search-icon">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="9" r="7" stroke="#888" stroke-width="2"/>
+          <line x1="14.2" y1="14.2" x2="18" y2="18" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <input type="text" placeholder="Search Clipboard..."  />
+      <button class="search-btn" >
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 10h10M10 5l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
-    <div class="main-content">
-      <section class="favorites-section">
-        <div class="section-title">Favorites</div>
-        <div id="favoriteList" class="clip-list"></div>
-      </section>
-      <section class="history-section">
-        <div class="section-title">Clipboard History</div>
-        <div id="historyList" class="clip-list"></div>
-      </section>
+    <div class="main-content"> 
+      <!-- dynamic rendering -->
     </div>
-    <div class="status-bar" id="statusBar">Ready</div>
   </div>
   <script src="main.js"></script>
 </body>

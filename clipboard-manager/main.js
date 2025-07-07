@@ -1,103 +1,98 @@
 // =====================
-// ClipboardManager Main Logic
+// ClipboardManager 
 // =====================
 
-const historyList = document.getElementById('historyList');
-const favoriteList = document.getElementById('favoriteList');
-const statusBar = document.getElementById('statusBar');
+class ClipboardManager {
+  constructor() {
+    this.POLL_INTERVAL = 100;
+    this.HISTORY_LIST_MAX = 100
+  
+    this.listenerEnable = false
+    this.lastUniqID = null;
 
-// Render clipboard history
-async function renderHistory() {
-  const history = await window.clipboardAPI.getHistory();
-  historyList.innerHTML = '';
-  if (!history.length) {
-    historyList.innerHTML = '<div class="empty">No clipboard history</div>';
-    return;
-  }
-  for (const item of history) {
-    const el = createItemElement(item, false);
-    historyList.appendChild(el);
-  }
-}
+    this.historyList = []
 
-// Render favorites
-async function renderFavorites() {
-  const favorites = await window.clipboardAPI.getFavorites();
-  favoriteList.innerHTML = '';
-  if (!favorites.length) {
-    favoriteList.innerHTML = '<div class="empty">No favorites</div>';
-    return;
+    this.init();
   }
-  for (const item of favorites) {
-    const el = createItemElement(item, true);
-    favoriteList.appendChild(el);
-  }
-}
+  
+  /**
+   * Initialize the plugin
+   */
+  async init() {
+    await this.startClipboardListener();
 
-// Create item element
-function createItemElement(item, isFavorite) {
-  const div = document.createElement('div');
-  div.className = 'clip-item';
-  if (item.type === 'text') {
-    div.innerHTML = `<div class="clip-content">${escapeHtml(item.data)}</div>`;
-  } else if (item.type === 'image') {
-    div.innerHTML = `<img class="clip-img" src="${item.data}" alt="Clipboard Image" />`;
+    window.addEventListener('DOMContentLoaded', renderHistoryList);
+    setInterval(renderHistoryList, 300);
   }
-  // Action buttons
-  const btns = document.createElement('div');
-  btns.className = 'clip-actions';
-  // Favorite/Unfavorite
-  const favBtn = document.createElement('button');
-  favBtn.className = 'btn-fav';
-  favBtn.innerText = isFavorite ? 'Unfavorite' : 'Favorite';
-  favBtn.onclick = async (e) => {
-    e.stopPropagation();
-    if (isFavorite) {
-      await window.clipboardAPI.removeFavorite(item.id);
-      showStatus('Removed from favorites');
-    } else {
-      await window.clipboardAPI.addFavorite(item);
-      showStatus('Added to favorites');
+
+  /**
+   * start up clipboard listener
+   */
+  async startClipboardListener() {
+    if (this.listenerEnable) {
+      return
+    } 
+    setInterval(() => this.checkClipboard(), this.POLL_INTERVAL)
+    this.listenerEnable = true
+  } 
+
+  async checkClipboard() {
+    const content = await window.clipboard.readClipboardItem();
+    if (!content) return; 
+     const uniqID = this.generateContentUniqID(content); 
+     if (uniqID == this.lastUniqID) return;  
+     this.lastUniqID = uniqID
+     // todo: execute set history item
+     this.addContent2HistoryList(content)
+  }
+
+  // Generate unique ID
+  generateContentUniqID(content) {
+    if (content.type === 'text') return 't_' + this.hashCode(content.data);
+    if (content.type === 'image') return 'i_' + this.hashCode(content.data);
+    return 'u_' + Date.now();
+  } 
+  
+  // hash code by clipboard content
+  hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i); 
+      hash |= 0;
     }
-    renderFavorites();
-    renderHistory();
-  };
-  btns.appendChild(favBtn);
-  // Copy
-  const copyBtn = document.createElement('button');
-  copyBtn.className = 'btn-copy';
-  copyBtn.innerText = 'Copy';
-  copyBtn.onclick = async (e) => {
-    e.stopPropagation();
-    await window.clipboardAPI.copyToClipboard(item);
-    showStatus('Copied to clipboard');
-  };
-  btns.appendChild(copyBtn);
-  div.appendChild(btns);
-  return div;
-}
-
-// Status message
-function showStatus(msg) {
-  statusBar.innerText = msg;
-  statusBar.style.opacity = 1;
-  setTimeout(() => { statusBar.style.opacity = 0.6; }, 1200);
-}
-
-// HTML escape
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-}
-
-// Listen for clipboard changes
-window.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'clipboard-changed') {
-    renderHistory();
+    return hash.toString(36);
   }
-});
 
-// Init
-(async function init() {
-  await renderHistory();
-  await renderFavorites();
-})(); 
+  addContent2HistoryList(content) {
+    if (this.historyList.length >= this.HISTORY_LIST_MAX) {
+      this.historyList.shift();
+    }
+    this.historyList.push(content);
+  }
+
+  getHistoryList() {
+    return this.historyList;
+  }
+
+  renderHistoryList() {
+    const list = this.getHistoryList();
+    const mainContent = document.querySelector('.main-content');
+    if (!list || list.length === 0) {
+      mainContent.innerHTML = '<div class="empty">No clipboard history.</div>';
+      return;
+    }
+    mainContent.innerHTML = '<div class="clip-list">' + list.map(item => {
+      if (item.type === 'text') {
+        return `<div class='clip-item'><div class='clip-content'>${item.data}</div></div>`; 
+      } else if (item.type === 'image') {
+        return `<div class='clip-item'><img class='clip-img' src='${item.data}' /></div>`;
+      } else {
+        return `<div class='clip-item'><div class='clip-content'>[Unknown type]</div></div>`; 
+      } 
+    }).join('') + '</div>';
+  }
+
+} 
+
+window.Clipboard = new ClipboardManager()
+window.renderHistoryList = () => window.Clipboard.renderHistoryList()
