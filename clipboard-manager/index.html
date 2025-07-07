@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clipboard Manager</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="container">
+    <header class="plugin-header">
+      <div class="plugin-icon-title">
+        <img src="icon.png" class="plugin-icon" alt="ClipboardManager Icon" />
+        <span class="plugin-title">Clipboard Manager</span>
+      </div>
+      <div class="plugin-version">v1.0.0</div>
+    </header>
+    <div class="search-bar">
+      <input type="text" placeholder="Search clipboard... (coming soon)" disabled />
+    </div>
+    <div class="main-content">
+      <section class="favorites-section">
+        <div class="section-title">Favorites</div>
+        <div id="favoriteList" class="clip-list"></div>
+      </section>
+      <section class="history-section">
+        <div class="section-title">Clipboard History</div>
+        <div id="historyList" class="clip-list"></div>
+      </section>
+    </div>
+    <div class="status-bar" id="statusBar">Ready</div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html> 

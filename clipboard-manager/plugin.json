@@ -1,0 +1,17 @@
+{
+  "name": "clipboard-manager",
+  "shortName": "Clipboard",
+  "version": "1.0.0",
+  "description": "A simple clipboard manager for oTools, supporting clipboard history and favorites for text and images.",
+  "author": "oTools",
+  "icon": "icon.png",
+  "type": "tool",
+  "ui": {
+    "html": "index.html",
+    "title": "Clipboard Manager",
+    "width": 420,
+    "height": 600
+  },
+  "startupMode": "independent",
+  "enabled": true
+} 
