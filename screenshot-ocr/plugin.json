@@ -13,5 +13,7 @@
     "height": 600
   },
   "startupMode": "independent",
-  "enabled": true
+  "enabled": true,
+  "dir": "/Users/y.zhang/Library/Application Support/oTools/plugins/screenshot-ocr",
+  "loadedAt": "2025-07-07T07:00:04.736Z"
 }

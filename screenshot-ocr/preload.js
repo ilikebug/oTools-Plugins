@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('plugin', {
   onPluginsExecute: (callback) => ipcRenderer.on('plugin-execute', (event, args) => callback(args)),
   
   // OCR functions
+  captureScreen: () => ipcRenderer.invoke('capture-screen'),
   performOcr: (imageData) => ipcRenderer.invoke('perform-ocr', imageData),
   captureAndOcr: () => ipcRenderer.invoke('capture-and-ocr'),
   

@@ -456,28 +456,65 @@ class OCRPlugin {
     // ============================================================================
     
     /**
-     * Take screenshot
+     * Take screenshot and perform OCR (separately)
      */
     async Screenshot() {
         this.updateStatus('Taking screenshot...');
         this.prepareForProcessing();
-        this.setProcessingText('Processing screenshot...');
-        
+        this.setProcessingText('Waiting for OCR result...');
+
         window.plugin.hideWindow();
-        
+        let imageData = null;
         try {
-            const result = await window.plugin.captureAndOcr();
-            if (result && result.imageData && result.text !== undefined) {
-                this.displayResult({ imageData: result.imageData, text: result.text });
+            // Only capture screenshot, do not perform OCR yet
+            const result = await window.plugin.captureScreen();
+            if (result && result.imageData) {
+                imageData = result.imageData;
+                if (imageData instanceof Uint8Array || (typeof Buffer !== 'undefined' && imageData instanceof Buffer)) {
+                    if (typeof Buffer !== 'undefined' && imageData instanceof Buffer) {
+                        imageData = imageData.toString('base64');
+                    } else {
+                        // 浏览器环境
+                        const binaryString = Array.from(imageData, byte => String.fromCharCode(byte)).join('');
+                        imageData = btoa(binaryString);
+                    }
+                }
+
+                if (typeof imageData === 'string' && !imageData.startsWith('data:')) {
+                    imageData = 'data:image/png;base64,' + imageData;
+                }
+                // Show window and image immediately
                 setTimeout(() => window.plugin.showWindow(), 100);
+                this.displayImageFromDataUrl(imageData);
+                this.currentImageData = imageData;
+                this.setProcessingText('Waiting for OCR result...');
+                this.updateStatus('Recognizing text...');
             } else {
-                this.displayError('No valid screenshot or OCR result obtained');
                 setTimeout(() => window.plugin.showWindow(), 100);
+                this.displayError('No valid screenshot obtained');
+                this.finishProcessing();
+                return;
             }
         } catch (e) {
-            console.log(`Screenshot or OCR failed: ${e}`);
-            this.displayError('Screenshot or OCR failed: ' + e.message);
             setTimeout(() => window.plugin.showWindow(), 100);
+            this.displayError('Screenshot failed: ' + e.message);
+            this.finishProcessing();
+            return;
+        }
+
+        // Perform OCR asynchronously
+        try {
+            const ocrResult = await window.plugin.performOcr(imageData);
+            if (ocrResult && ocrResult.text) {
+                this.displayText(ocrResult.text);
+                this.updateStatus('Recognition complete');
+            } else {
+                this.displayText('');
+                this.updateStatus('No text found in image');
+            }
+        } catch (e) {
+            this.displayError('OCR failed: ' + e.message);
+            this.updateStatus('Recognition failed');
         } finally {
             this.finishProcessing();
         }
