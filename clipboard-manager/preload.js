@@ -1,34 +1,21 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Key names for clipboard history and favorites
 const HISTORY_KEY = 'clipboard_history';
+const DB_NAME = 'clipboard_db'
 
-
-
-// History functions
+// Get History 
 async function getHistory() {
-  return (await ipcRenderer.invoke('get-db-value', HISTORY_KEY)) || [];
-}
-async function setHistory(list) {
-  await ipcRenderer.invoke('set-db-value', HISTORY_KEY, list);
-}
-async function addHistoryItem(item) {
-  let list = await getHistory();
-  list = list.filter(i => i.id !== item.id);
-  list.unshift(item);
-  if (list.length > 50) list = list.slice(0, 50);
-  await setHistory(list);
-}
-
-// Copy to clipboard
-async function copyToClipboard(item) {
-  if (item.type === 'text') {
-    await ipcRenderer.invoke('write-clipboard', item.data);
-  } else if (item.type === 'image') {
-    await ipcRenderer.invoke('write-clipboard-image', item.data);
+  const result = await ipcRenderer.invoke('get-db-value', DB_NAME, HISTORY_KEY); 
+  if (result && result.success && result.value) {
+    return result.value
   }
+  return []
 }
-
+ 
+// Set History
+async function setHistory(list) {
+  await ipcRenderer.invoke('set-db-value', DB_NAME, HISTORY_KEY, list);
+}
 
 // Read clipboard content (prefer text, then image)
 async function readClipboardItem() {
@@ -43,8 +30,27 @@ async function readClipboardItem() {
   return null; 
 }
 
+// Copy to clipboard
+async function copyToClipboard(item) {
+  if (item.type === 'text') {
+    await ipcRenderer.invoke('write-clipboard', item.data); 
+  } else if (item.type === 'image') {
+    await ipcRenderer.invoke('write-clipboard-image', item.data);
+  }
+}
+
+// Hide window
+async function hideWindow() {
+  await ipcRenderer.invoke('hide-window');
+}
 
 contextBridge.exposeInMainWorld('clipboard', {
-  readClipboardItem
+  getHistory,
+  setHistory,
+
+  readClipboardItem,
+  copyToClipboard,
+   
+  hideWindow,
 });
  
