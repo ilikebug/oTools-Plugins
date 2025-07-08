@@ -44,13 +44,29 @@ async function hideWindow() {
   await ipcRenderer.invoke('hide-window');
 }
 
+// Simulate paste 
+async function paste() {
+  const pos = await ipcRenderer.invoke('get-mouse-position');
+  if (pos && pos.success) {
+    await ipcRenderer.invoke('simulate-mouse', 'click', 
+      { x: pos.x, y: pos.y, button: 'left' }); 
+  }
+  let modifiers = ['command'];
+  if (process.platform === 'win32' || process.platform === 'linux') {
+    modifiers = ['control'];
+  }
+  setTimeout(() => {
+    ipcRenderer.invoke('simulate-keyboard', 'keyTap', { key: 'v', modifiers });
+  }, 100);
+}
+
 contextBridge.exposeInMainWorld('clipboard', {
   getHistory,
   setHistory,
 
   readClipboardItem,
   copyToClipboard,
-   
   hideWindow,
+  paste,
 });
  

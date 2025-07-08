@@ -11,8 +11,12 @@
     "title": "Clipboard Manager",
     "width": 300,
     "height": 350,
-    "frame": false
+    "frame": false,
+    "hideOnBlur": true
   },
-  "startupMode": "independent",
-  "enabled": true
-} 
+  "startupMode": "dependent",
+  "popupAtCursor": true,
+  "enabled": true,
+  "dir": "/Users/zhangye/Library/Application Support/oTools/plugins/clipboard-manager",
+  "loadedAt": "2025-07-08T12:50:11.418Z"
+}

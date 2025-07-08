@@ -156,11 +156,24 @@ html, body {
 .clip-item:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
+.clip-item.selected {
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.10);
+}
 .clip-content {
   font-size: 1rem;
   color: #222;
   word-break: break-all;
   flex: 1;
+  max-height: 60px; /* Limit max height */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Show up to 3 lines */
+  -webkit-box-orient: vertical;
+  position: relative;
+  cursor: pointer;
 }
 .clip-img {
   display: block;
