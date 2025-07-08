@@ -10,7 +10,9 @@
     "html": "index.html",
     "title": "Screenshot OCR Result",
     "width": 900,
-    "height": 600
+    "height": 600,
+    "frame": false,
+    "hideOnBlur": true
   },
   "startupMode": "independent",
   "enabled": true,
