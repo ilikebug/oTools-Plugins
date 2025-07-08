@@ -92,6 +92,7 @@ class ClipboardManager {
 
   renderHistoryList(list) {
     if (!list) { list = this.getHistoryList() }
+    list = [...list].reverse();
     const mainContent = document.querySelector('.main-content');
     if (!list || list.length === 0) {
       mainContent.innerHTML = '<div class="empty">No clipboard history.</div>';
@@ -99,7 +100,7 @@ class ClipboardManager {
     }
     mainContent.innerHTML = '<div class="clip-list">' + list.map((item, idx) => {
       if (item.type === 'text') {
-        return `<div class='clip-item' data-index='${idx}'><div class='clip-content' data-fulltext="${this.escapeHtml(item.data)}">${item.data}</div></div>`; 
+        return `<div class='clip-item' data-index='${idx}'><div class='clip-content' data-fulltext="${this.escapeHtml(item.data)}">${this.escapeHtml(item.data)}</div></div>`; 
       } else if (item.type === 'image') {
         return `<div class='clip-item' data-index='${idx}'><img class='clip-img' src='${item.data}' loading="lazy" /></div>`;
       } else {
@@ -146,7 +147,7 @@ class ClipboardManager {
     }
     let selectedIdx = 0;
     const items = document.querySelectorAll('.clip-item');
-    if (items.length === 0) return;
+    if (items.length === 0) return;  
     // Set initial highlight
     items.forEach((el, idx) => {
       el.classList.toggle('selected', idx === selectedIdx);
