@@ -364,10 +364,10 @@ class OCRPlugin {
             return;
         }
         
-        const result = await window.plugin.showSaveDialog();
+        const result = await window.otools.showSaveDialog();
         if (result && result.filePath) {
             try {
-                await window.plugin.writeFile(result.filePath, `data:image/png;base64,${this.currentImageData}`);
+                await window.otools.writeFile(result.filePath, `data:image/png;base64,${this.currentImageData}`);
                 this.updateStatus('Image saved successfully', 'copy-success');
             } catch (error) {
                 console.error('Save failed:', error);
@@ -463,11 +463,11 @@ class OCRPlugin {
         this.prepareForProcessing();
         this.setProcessingText('Waiting for OCR result...');
 
-        window.plugin.hideWindow();
+        window.otools.hideWindow();
         let imageData = null;
         try {
             // Only capture screenshot, do not perform OCR yet
-            const result = await window.plugin.captureScreen();
+            const result = await window.otools.captureScreen();
             if (result && result.imageData) {
                 imageData = result.imageData;
                 if (imageData instanceof Uint8Array || (typeof Buffer !== 'undefined' && imageData instanceof Buffer)) {
@@ -484,19 +484,19 @@ class OCRPlugin {
                     imageData = 'data:image/png;base64,' + imageData;
                 }
                 // Show window and image immediately
-                setTimeout(() => window.plugin.showWindow(), 100);
+                setTimeout(() => window.otools.showWindow(), 100);
                 this.displayImageFromDataUrl(imageData);
                 this.currentImageData = imageData;
                 this.setProcessingText('Waiting for OCR result...');
                 this.updateStatus('Recognizing text...');
             } else {
-                setTimeout(() => window.plugin.showWindow(), 100);
+                setTimeout(() => window.otools.showWindow(), 100);
                 this.displayError('No valid screenshot obtained');
                 this.finishProcessing();
                 return;
             }
         } catch (e) {
-            setTimeout(() => window.plugin.showWindow(), 100);
+            setTimeout(() => window.otools.showWindow(), 100);
             this.displayError('Screenshot failed: ' + e.message);
             this.finishProcessing();
             return;
@@ -504,7 +504,7 @@ class OCRPlugin {
 
         // Perform OCR asynchronously
         try {
-            const ocrResult = await window.plugin.performOcr(imageData);
+            const ocrResult = await window.otools.performOcr(imageData);
             if (ocrResult && ocrResult.text) {
                 this.displayText(ocrResult.text);
                 this.updateStatus('Recognition complete');
@@ -525,7 +525,7 @@ class OCRPlugin {
      */
     async loadFileAndOcr() {
         try {
-            const result = await window.plugin.showOpenDialog({
+            const result = await window.otools.showOpenDialog({
                 properties: ['openFile'],
                 filters: [
                     { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff'] },
@@ -543,7 +543,7 @@ class OCRPlugin {
             this.prepareForProcessing();
             this.setProcessingText('Processing file...');
             
-            const fileData = await window.plugin.readFile(filePath);
+            const fileData = await window.otools.readFile(filePath);
             console.log('File data received:', fileData);
             console.log('File data type:', typeof fileData);
             
@@ -556,7 +556,7 @@ class OCRPlugin {
             this.currentImageData = imageData;
             
             this.updateStatus('Performing OCR...');
-            const ocrResult = await window.plugin.performOcr(imageData);
+            const ocrResult = await window.otools.performOcr(imageData);
             
             if (ocrResult && ocrResult.text) {
                 this.displayText(ocrResult.text);
