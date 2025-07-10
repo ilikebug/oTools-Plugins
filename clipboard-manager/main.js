@@ -292,4 +292,5 @@ async copyToClipboard(item) {
   }
 } 
 
-new ClipboardManager() 
+
+window.clipboard = new ClipboardManager() 
