@@ -292,5 +292,4 @@ async copyToClipboard(item) {
   }
 } 
 
-this = new ClipboardManager() 
-window.renderHistoryList = () => this.renderHistoryList()
+new ClipboardManager() 
