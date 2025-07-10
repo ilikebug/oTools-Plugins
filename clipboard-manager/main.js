@@ -6,6 +6,8 @@ class ClipboardManager {
   constructor() {
     this.POLL_INTERVAL = 100;
     this.HISTORY_LIST_MAX = 100
+    this.HISTORY_KEY = 'clipboard_history';
+    this.DB_NAME = 'clipboard_db'
   
     this.listenerEnable = false
     this.lastUniqID = null;
@@ -22,7 +24,7 @@ class ClipboardManager {
     await this.startClipboardListener();
 
     // init history list
-    this.historyList = await window.clipboard.getHistory() 
+    this.historyList = await this.getHistory() 
     // render history list
     this.renderHistoryList()
     // scheduled storage history
@@ -47,7 +49,7 @@ class ClipboardManager {
    * check clipboard
    */
   async checkClipboard() {
-    const content = await window.clipboard.readClipboardItem();
+    const content = await this.readClipboardItem();
     if (!content) return; 
      const uniqID = this.generateContentUniqID(content); 
      if (uniqID == this.lastUniqID) return;  
@@ -87,7 +89,7 @@ class ClipboardManager {
   }
 
   async saveHistoryList() {
-    await window.clipboard.setHistory(this.historyList)
+    await this.setHistory(this.historyList)
   } 
 
   renderHistoryList(list) {
@@ -114,9 +116,9 @@ class ClipboardManager {
       item.onclick = async (e) => {
         const idx = item.getAttribute('data-index');
         const content = list[idx];
-        await window.clipboard.copyToClipboard(content);
-        await window.clipboard.hideWindow();
-        setTimeout(() => window.clipboard.paste(), 100);
+        await this.copyToClipboard(content);
+        await window.otools.hideWindow();
+        setTimeout(() => this.paste(), 100);
       }
     });
 
@@ -169,10 +171,10 @@ class ClipboardManager {
         e.preventDefault();
       } else if (e.key === 'Enter') {
         const content = list[selectedIdx];
-        window.clipboard.copyToClipboard(content);
-        window.clipboard.hideWindow();
+        this.copyToClipboard(content);
+        this.hideWindow();
         e.preventDefault();
-        setTimeout(() => window.clipboard.paste(), 100);
+        setTimeout(() => this.paste(), 100);
       }
     };
     document.addEventListener('keydown', this._keydownHandler);
@@ -236,7 +238,59 @@ class ClipboardManager {
       return charsToReplace[tag] || tag;
     });
   }
+
+  // Get History 
+  async getHistory() {
+    const result = await window.otools.getDbValue(DB_NAME, HISTORY_KEY); 
+    if (result && result.success && result.value) {
+      return result.value
+    }
+    return []
+  }
+ 
+  // Set History
+  async setHistory(list) {
+    await window.otools.setDbValue(DB_NAME, HISTORY_KEY, list);
+  }
+
+  // Read clipboard content (prefer text, then image)
+  async readClipboardItem() {
+    const textData = await window.otools.readClipboard();
+    if (textData && textData.success) {
+      return { type: 'text', data: textData.text };
+    }
+    const imageData = await window.otools.readClipboardImage(); 
+    if (imageData && imageData.success) {
+      return { type: 'image', data: imageData.imageData };
+    }
+    return null; 
+  }
+
+// Copy to clipboard
+async copyToClipboard(item) {
+  if (item.type === 'text') {
+    await window.otools.writeClipboard(item.data); 
+  } else if (item.type === 'image') {
+    await window.otools.writeClipboardImage(item.data);
+  }
+}
+
+  // Simulate paste 
+  async paste() {
+    const pos = await window.otools.getMousePosition();
+    if (pos && pos.success) {
+      await window.otools.simulateMouse('click', 
+        { x: pos.x, y: pos.y, button: 'left' }); 
+    }
+    let modifiers = ['command'];
+    if (process.platform === 'win32' || process.platform === 'linux') {
+      modifiers = ['control'];
+    }
+    setTimeout(() => {
+      window.otools.simulateKeyboard('keyTap', { key: 'v', modifiers });
+    }, 100);
+  }
 } 
 
-window.Clipboard = new ClipboardManager() 
-window.renderHistoryList = () => window.Clipboard.renderHistoryList()
+this = new ClipboardManager() 
+window.renderHistoryList = () => this.renderHistoryList()
