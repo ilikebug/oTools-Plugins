@@ -35,3 +35,36 @@ A collection of oTools plugins providing various utility functions.
    - **Save Image**: Click "Save Image" to save the original image
    - **Copy Image**: Click "Copy Image" to copy image to clipboard
    - **Clear Content**: Click "Clear" to clear current results 
+
+### Clipboard Manager
+
+**Version**: v1.0.0  
+**Type**: Clipboard Management Plugin  
+**Description**: A simple and efficient clipboard manager supporting history and favorites for both text and images.
+
+#### Main Features
+
+- **Clipboard History**: Automatically records text and image clipboard content, supports up to 100 history items
+- **Favorites**: Allows adding frequently used clipboard items to favorites for quick access
+- **One-Click Paste**: Quickly paste historical content by clicking or using keyboard shortcuts
+- **Search Function**: Supports keyword search within clipboard history
+- **Multi-Type Support**: Supports both text and image clipboard content
+- **Keyboard Navigation**: Navigate and paste quickly using arrow keys, Tab, and Enter
+- **Data Persistence**: Clipboard history and favorites are automatically saved and available after restart
+
+#### Usage Instructions
+
+1. **View History**:
+   - The plugin automatically displays the most recent clipboard content
+   - Click an item to copy and automatically paste it at the current cursor position
+
+2. **Add/Remove Favorites**:
+   - Click the star button to add or remove items from favorites
+   - Use the Tab key to toggle between all items and favorites only
+
+3. **Search Content**:
+   - Enter keywords in the top input box to filter history in real time
+
+4. **Keyboard Operations**:
+   - Use arrow keys to select items, Enter to quickly paste
+   - Tab to switch between all and favorites view 
