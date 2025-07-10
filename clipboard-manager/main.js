@@ -241,7 +241,7 @@ class ClipboardManager {
 
   // Get History 
   async getHistory() {
-    const result = await window.otools.getDbValue(DB_NAME, HISTORY_KEY); 
+    const result = await window.otools.getDbValue(this.DB_NAME, this.HISTORY_KEY); 
     if (result && result.success && result.value) {
       return result.value
     }
@@ -250,7 +250,7 @@ class ClipboardManager {
  
   // Set History
   async setHistory(list) {
-    await window.otools.setDbValue(DB_NAME, HISTORY_KEY, list);
+    await window.otools.setDbValue(this.DB_NAME, this.HISTORY_KEY, list);
   }
 
   // Read clipboard content (prefer text, then image)
