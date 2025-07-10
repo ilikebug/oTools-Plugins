@@ -7,12 +7,15 @@ class ClipboardManager {
     this.POLL_INTERVAL = 100;
     this.HISTORY_LIST_MAX = 100
     this.HISTORY_KEY = 'clipboard_history';
+    this.FAV_KEY = 'clipboard_fav';
     this.DB_NAME = 'clipboard_db'
   
     this.listenerEnable = false
     this.lastUniqID = null;
 
     this.historyList = [] 
+    this.favList = []
+    this.showFavOnly = false 
 
     this.init();
   }
@@ -25,14 +28,20 @@ class ClipboardManager {
 
     // init history list
     this.historyList = await this.getHistory() 
+    // init fav list
+    this.favList = await this.getFavList()
     // render history list
     this.renderHistoryList()
-    // scheduled storage history
-    setInterval(() => this.saveHistoryList(), 5000);  
+    // scheduled storage history & fav
+    setInterval(() => {
+      this.saveHistoryList();
+      this.saveFavList();
+    }, 5000);  
 
     // Bind search events
     this.bindSearchEvents();
-  }  
+    this.bindFavToggleEvent();
+  }
 
   /**
    * start up clipboard listener
@@ -93,20 +102,39 @@ class ClipboardManager {
   } 
 
   renderHistoryList(list) {
-    if (!list) { list = this.getHistoryList() }
-    list = [...list].reverse();
+
+    if (this.showFavOnly) {
+      list = [...this.favList].reverse();
+    } else if (!list) {
+      list = [...this.historyList].reverse();
+    }
     const mainContent = document.querySelector('.main-content');
     if (!list || list.length === 0) {
       mainContent.innerHTML = '<div class="empty">No clipboard history.</div>';
       return;
     }
     mainContent.innerHTML = '<div class="clip-list">' + list.map((item, idx) => {
+      const isFav = this.isFav(item) ? 'fav' : '';
+      const starIcon = `<button class="clip-fav-btn ${isFav}" data-index="${idx}" title="Favorite">
+        <svg viewBox="0 0 20 20" fill="none" width="18" height="18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 15l-5.09 2.67 1-5.82L2 7.97l5.91-.86L10 2.5l2.09 4.61 5.91.86-4.27 4.88 1 5.82z" stroke="#2563eb" stroke-width="1.5" fill="${this.isFav(item) ? '#ffd600' : 'none'}"/>
+        </svg>
+      </button>`;
       if (item.type === 'text') {
-        return `<div class='clip-item' data-index='${idx}'><div class='clip-content' data-fulltext="${this.escapeHtml(item.data)}">${this.escapeHtml(item.data)}</div></div>`; 
+        return `<div class='clip-item' data-index='${idx}'>
+          <div class='clip-content' data-fulltext="${this.escapeHtml(item.data)}">${this.escapeHtml(item.data)}</div>
+          ${starIcon}
+        </div>`; 
       } else if (item.type === 'image') {
-        return `<div class='clip-item' data-index='${idx}'><img class='clip-img' src='${item.data}' loading="lazy" /></div>`;
+        return `<div class='clip-item' data-index='${idx}'>
+          <img class='clip-img' src='${item.data}' loading="lazy" />
+          ${starIcon}
+        </div>`;
       } else {
-        return `<div class='clip-item' data-index='${idx}'><div class='clip-content'>[Unknown type]</div></div>`; 
+        return `<div class='clip-item' data-index='${idx}'>
+          <div class='clip-content'>[Unknown type]</div>
+          ${starIcon}
+        </div>`; 
       } 
     }).join('') + '</div>';
 
@@ -114,11 +142,27 @@ class ClipboardManager {
     const items = mainContent.querySelectorAll('.clip-item');
     items.forEach(item => {
       item.onclick = async (e) => {
+        if (e.target.closest('.clip-fav-btn')) return;
         const idx = item.getAttribute('data-index');
         const content = list[idx];
         await this.copyToClipboard(content);
         await window.otools.hideWindow();
         setTimeout(() => this.paste(), 100);
+      }
+    });
+
+    const favBtns = mainContent.querySelectorAll('.clip-fav-btn');
+    favBtns.forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const idx = btn.getAttribute('data-index');
+        const content = list[idx];
+        if (this.isFav(content)) {
+          this.removeFromFav(content);
+        } else {
+          this.addToFav(content);
+        }
+        this.renderHistoryList(list);
       }
     });
 
@@ -149,12 +193,24 @@ class ClipboardManager {
     }
     let selectedIdx = 0;
     const items = document.querySelectorAll('.clip-item');
-    if (items.length === 0) return;  
+    if (items.length === 0) return;
     // Set initial highlight
     items.forEach((el, idx) => {
       el.classList.toggle('selected', idx === selectedIdx);
     });
     this._keydownHandler = (e) => {
+      if (e.key === 'Tab' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        this.showFavOnly = !this.showFavOnly;
+        const favToggleBtn = document.querySelector('.fav-toggle-btn');
+        if (favToggleBtn) {
+          favToggleBtn.classList.toggle('active', this.showFavOnly);
+        }
+        const input = document.querySelector('.top-bar input');
+        if (input) input.value = '';
+        this.renderHistoryList();
+        return;
+      }
       if (e.key === 'ArrowDown') {
         selectedIdx = (selectedIdx + 1) % items.length;
         items.forEach((el, idx) => {
@@ -172,7 +228,7 @@ class ClipboardManager {
       } else if (e.key === 'Enter') {
         const content = list[selectedIdx];
         this.copyToClipboard(content);
-        this.hideWindow();
+        window.otools.hideWindow();
         e.preventDefault();
         setTimeout(() => this.paste(), 100);
       }
@@ -180,27 +236,31 @@ class ClipboardManager {
     document.addEventListener('keydown', this._keydownHandler);
   }
 
+  bindFavToggleEvent() {
+    const favToggleBtn = document.querySelector('.fav-toggle-btn');
+    if (favToggleBtn) {
+      favToggleBtn.onclick = () => {
+        this.showFavOnly = !this.showFavOnly;
+        favToggleBtn.classList.toggle('active', this.showFavOnly);
+        const input = document.querySelector('.top-bar input');
+        if (input) input.value = '';
+        this.renderHistoryList();
+      }
+    }
+  }
+
   /**
    * Bind search input and button events
    */
   bindSearchEvents() {
-    const input = document.querySelector('.search-bar input');
-    const btn = document.querySelector('.search-btn');
-    if (!input || !btn) return;
-    // Search on Enter key
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        this.handleSearch(input.value);
-      }
-    });
-    // Search on button click
-    btn.addEventListener('click', () => {
-      this.handleSearch(input.value);
-    });
-    // Restore all history when input is empty
+    const input = document.querySelector('.top-bar input');
+    if (!input) return;
     input.addEventListener('input', () => {
-      if (input.value === '') {
+      const value = input.value;
+      if (value === '') {
         this.renderHistoryList();
+      } else {
+        this.handleSearch(value);
       }
     });
   }
@@ -266,14 +326,14 @@ class ClipboardManager {
     return null; 
   }
 
-// Copy to clipboard
-async copyToClipboard(item) {
-  if (item.type === 'text') {
-    await window.otools.writeClipboard(item.data); 
-  } else if (item.type === 'image') {
-    await window.otools.writeClipboardImage(item.data);
+  // Copy to clipboard
+  async copyToClipboard(item) {
+    if (item.type === 'text') {
+      await window.otools.writeClipboard(item.data); 
+    } else if (item.type === 'image') {
+      await window.otools.writeClipboardImage(item.data);
+    }
   }
-}
 
   // Simulate paste 
   async paste() {
@@ -283,14 +343,45 @@ async copyToClipboard(item) {
         { x: pos.x, y: pos.y, button: 'left' }); 
     }
     let modifiers = ['command'];
-    if (process.platform === 'win32' || process.platform === 'linux') {
+    if (window.plugin.getplatformName() === 'win32' ||
+        window.plugin.getplatformName() === 'linux') {
       modifiers = ['control'];
     }
     setTimeout(() => {
       window.otools.simulateKeyboard('keyTap', { key: 'v', modifiers });
     }, 100);
   }
+
+  // fav methods
+  async getFavList() {
+    const result = await window.otools.getDbValue(this.DB_NAME, this.FAV_KEY);
+    if (result && result.success && result.value) {
+      return result.value;
+    }
+    return [];
+  }
+
+  async saveFavList() {
+    await window.otools.setDbValue(this.DB_NAME, this.FAV_KEY, this.favList);
+  }
+
+  addToFav(item) {
+    const uniqID = this.generateContentUniqID(item);
+    if (!this.favList.find(f => this.generateContentUniqID(f) === uniqID)) {
+      this.favList.push(item);
+    }
+  }
+
+  removeFromFav(item) {
+    const uniqID = this.generateContentUniqID(item);
+    this.favList = this.favList.filter(f => this.generateContentUniqID(f) !== uniqID);
+  }
+  
+  isFav(item) {
+    const uniqID = this.generateContentUniqID(item);
+    return this.favList.some(f => this.generateContentUniqID(f) === uniqID);
+  }
 } 
 
 
-window.clipboard = new ClipboardManager() 
+window.clipboard = new ClipboardManager()
