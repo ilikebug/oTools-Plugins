@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Manager</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <img src="icon.png" class="plugin-icon" alt="PasswordManager Icon" />
+      <input type="text" placeholder="Search passwords..." />
+      <button class="add-btn" title="Add New Password">
+        <svg viewBox="0 0 20 20" fill="none" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 3v14M3 10h14" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="main-content"> 
+      <!-- dynamic rendering -->
+    </div>
+  </div>
+  
+  <!-- Add/Edit Password Modal -->
+  <div class="modal" id="passwordModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Password</h3>
+        <button class="close-btn" id="closeModal">
+          <svg viewBox="0 0 20 20" fill="none" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 5L5 15M5 5l10 10" stroke="#666" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" id="title" placeholder="Enter title...">
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter username...">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-input">
+            <input type="password" id="password" placeholder="Enter password...">
+            <button class="toggle-password" id="togglePassword">
+              <svg viewBox="0 0 20 20" fill="none" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 10s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8z" stroke="#666" stroke-width="2"/>
+                <circle cx="10" cy="10" r="3" stroke="#666" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="url">URL (Optional)</label>
+          <input type="url" id="url" placeholder="Enter URL...">
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes (Optional)</label>
+          <textarea id="notes" placeholder="Enter notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancelBtn">Cancel</button>
+        <button class="btn-primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="main.js"></script>
+</body>
+</html> 

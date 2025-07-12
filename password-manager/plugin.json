@@ -1,0 +1,20 @@
+{
+  "name": "password-manager",
+  "shortName": "Password",
+  "version": "1.0.0",
+  "description": "A secure password manager for oTools, supporting password storage, search, and auto-paste functionality.",
+  "author": "oTools",
+  "icon": "icon.png",
+  "type": "password",
+  "ui": {
+    "html": "index.html",
+    "title": "Password Manager",
+    "width": 400,
+    "height": 500,
+    "frame": false,
+    "hideOnBlur": true
+  },
+  "startupMode": "independent",
+  "popupAtCursor": true,
+  "enabled": true
+}

@@ -68,3 +68,43 @@ A collection of oTools plugins providing various utility functions.
 4. **Keyboard Operations**:
    - Use arrow keys to select items, Enter to quickly paste
    - Tab to switch between all and favorites view 
+
+### Password Manager
+
+**Version**: v1.0.0  
+**Type**: Password Management Plugin  
+**Description**: A secure and reliable password manager supporting password storage, search, and auto-paste functionality.
+
+#### Main Features
+
+- **Password Storage**: Securely store usernames and passwords for websites and applications
+- **Quick Search**: Support keyword search by title, username, URL, and notes
+- **One-Click Copy**: Click on password items to copy and auto-paste at current cursor position
+- **Password Editing**: Support adding, editing, and deleting password entries
+- **Password Visibility**: Toggle password show/hide during editing
+- **Keyboard Navigation**: Use arrow keys to select and Enter to quickly copy passwords
+- **Data Persistence**: Password data is automatically saved and available after restart
+- **Security Notifications**: Friendly notification prompts for successful or failed operations
+
+#### Usage Instructions
+
+1. **Add Password**:
+   - Click the "+" button in the top right to open the add password window
+   - Fill in required information: title, username, password
+   - Optionally fill in URL and notes
+   - Click "Save" to store the password
+
+2. **Search Passwords**:
+   - Enter keywords in the top search box
+   - Supports search by title, username, URL, and notes
+   - Results are displayed in real-time
+
+3. **Use Passwords**:
+   - Click on password items or copy buttons to copy passwords
+   - Passwords are automatically pasted at the current cursor position
+   - Use arrow keys to select and Enter to quickly copy
+
+4. **Manage Passwords**:
+   - Click edit button to modify password information
+   - Click delete button to remove unwanted passwords
+   - Toggle password show/hide during editing 
