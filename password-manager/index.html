@@ -46,10 +46,16 @@
           <label for="password">Password</label>
           <div class="password-input">
             <input type="password" id="password" placeholder="Enter password...">
-            <button class="toggle-password" id="togglePassword">
+            <button class="toggle-password" id="togglePassword" title="Show/Hide Password">
+              <!-- Modern eye icon, will be toggled by JS -->
+              <svg id="togglePasswordIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="generate-password" id="generatePassword" title="Generate Password">
               <svg viewBox="0 0 20 20" fill="none" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 10s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8z" stroke="#666" stroke-width="2"/>
-                <circle cx="10" cy="10" r="3" stroke="#666" stroke-width="2"/>
+                <path d="M10 2v2M10 16v2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M2 10h2M16 10h2M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="#666" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </button>
           </div>

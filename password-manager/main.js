@@ -374,6 +374,7 @@ class PasswordManager {
     const cancelBtn = document.getElementById('cancelBtn');
     const saveBtn = document.getElementById('saveBtn');
     const togglePasswordBtn = document.getElementById('togglePassword');
+    const generatePasswordBtn = document.getElementById('generatePassword');
 
     // Close modal
     if (closeBtn) {
@@ -402,6 +403,17 @@ class PasswordManager {
       });
     }
 
+    // Generate password
+    if (generatePasswordBtn) {
+      generatePasswordBtn.addEventListener('click', () => {
+        // Generate a strong password and fill the input
+        const password = this.generateStrongPassword();
+        document.getElementById('password').value = password;
+        // Optionally, show a notification
+        this.showNotification('Password generated!', 'success');
+      });
+    }
+
     // Close modal on outside click
     if (modal) {
       modal.addEventListener('click', (e) => {
@@ -421,6 +433,34 @@ class PasswordManager {
         }
       });
     });
+  }
+
+  /**
+   * Generate a strong random password
+   * @param {number} length - Password length (default 16)
+   * @param {boolean} useUpper - Include uppercase letters
+   * @param {boolean} useLower - Include lowercase letters
+   * @param {boolean} useNumbers - Include numbers
+   * @param {boolean} useSymbols - Include symbols
+   * @returns {string} Generated password
+   */
+  generateStrongPassword(length = 16, useUpper = true, useLower = true, useNumbers = true, useSymbols = true) {
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const numbers = '0123456789';
+    const symbols = '!@#$%^&*()-_=+[]{}|;:,.<>?';
+    let chars = '';
+    if (useUpper) chars += upper;
+    if (useLower) chars += lower;
+    if (useNumbers) chars += numbers;
+    if (useSymbols) chars += symbols;
+    if (!chars) chars = lower;
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      const idx = Math.floor(Math.random() * chars.length);
+      password += chars[idx];
+    }
+    return password;
   }
 
   /**
@@ -753,28 +793,21 @@ class PasswordManager {
   }
 
   /**
-   * Toggle password visibility
+   * Toggle password visibility and update eye icon
    */
   togglePasswordVisibility() {
     const passwordInput = document.getElementById('password');
     const toggleBtn = document.getElementById('togglePassword');
-    
+    const icon = document.getElementById('togglePasswordIcon');
+
     if (passwordInput.type === 'password') {
       passwordInput.type = 'text';
-      toggleBtn.innerHTML = `
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.94 17.94A10.07 10.07 0 0120 10c0-5.52-4.48-10-10-10S0 4.48 0 10c0 1.76.46 3.4 1.26 4.82L17.94 17.94zM14.82 14.82L1.26 1.26A10.07 10.07 0 000 10c0 5.52 4.48 10 10 10 1.76 0 3.4-.46 4.82-1.26L14.82 14.82z" stroke="#666" stroke-width="2"/>
-          <path d="M10 13a3 3 0 100-6 3 3 0 000 6z" stroke="#666" stroke-width="2"/>
-        </svg>
-      `;
+      // Switch to eye-off icon
+      icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0120 12c0-5.52-4.48-10-10-10S0 6.48 0 12c0 1.76.46 3.4 1.26 4.82L17.94 17.94z"/><path d="M1 1l22 22"/>';
     } else {
       passwordInput.type = 'password';
-      toggleBtn.innerHTML = `
-        <svg viewBox="0 0 20 20" fill="none" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 10s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8z" stroke="#666" stroke-width="2"/>
-          <circle cx="10" cy="10" r="3" stroke="#666" stroke-width="2"/>
-        </svg>
-      `;
+      // Switch to eye icon
+      icon.innerHTML = '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>';
     }
   }
 

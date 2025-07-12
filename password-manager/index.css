@@ -301,9 +301,10 @@ html, body {
   padding-right: 40px;
 }
 
-.toggle-password {
+/* Password generator button style */
+.generate-password {
   position: absolute;
-  right: 8px;
+  right: 40px;
   background: none;
   border: none;
   outline: none;
@@ -311,10 +312,16 @@ html, body {
   padding: 4px;
   border-radius: 4px;
   transition: background 0.2s;
+  margin-left: 4px;
+}
+.generate-password:hover {
+  background: var(--item-bg);
 }
 
-.toggle-password:hover {
-  background: var(--item-bg);
+/* Adjust toggle-password position to make room for generator */
+.toggle-password {
+  right: 8px;
+  margin-left: 4px;
 }
 
 .modal-footer {
