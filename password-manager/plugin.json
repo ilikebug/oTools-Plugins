@@ -9,10 +9,10 @@
   "ui": {
     "html": "index.html",
     "title": "Password Manager",
-    "width": 400,
-    "height": 500,
+    "width": 380,
+    "height": 480,
     "frame": false,
-    "hideOnBlur": true
+    "hideOnBlur": true 
   },
   "startupMode": "independent",
   "popupAtCursor": true,

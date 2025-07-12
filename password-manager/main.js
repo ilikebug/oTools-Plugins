@@ -529,7 +529,7 @@ class PasswordManager {
   }
 
   /**
-   * Render password list
+   * Render password list with TOTP code if available
    */
   renderPasswordList() {
     const mainContent = document.querySelector('.main-content');
@@ -542,7 +542,6 @@ class PasswordManager {
     }
 
     let filteredPasswords = this.passwordList;
-    
     // Filter by search keyword
     if (this.searchKeyword) {
       filteredPasswords = this.passwordList.filter(password => 
@@ -561,11 +560,19 @@ class PasswordManager {
 
     const passwordListHtml = filteredPasswords.map(password => {
       const id = password.id;
+      // Generate TOTP code if totpSecret exists
+      let totpHtml = '';
+      if (password.totpSecret) {
+        const code = this.getTotpCode(password.totpSecret);
+        const remaining = this.getTotpRemaining();
+        totpHtml = `<div class="totp-section"><span class="totp-code" id="totp-code-${id}">${code}</span><span class="totp-timer" id="totp-timer-${id}">${remaining}s</span></div>`;
+      }
       return `
         <div class="password-item" data-id="${id}">
           <div class="password-info">
             <div class="password-title">${this.escapeHtml(password.title)}</div>
             <div class="password-username">${this.escapeHtml(password.username)}</div>
+            ${totpHtml}
           </div>
           <div class="password-actions">
             <button class="action-btn copy-btn" title="Copy Password" data-id="${id}">
@@ -593,6 +600,11 @@ class PasswordManager {
 
     // Bind password item events
     this.bindPasswordItemEvents();
+
+    // Start TOTP timer if any entry has TOTP
+    if (filteredPasswords.some(p => p.totpSecret)) {
+      this.startTotpTimer(filteredPasswords);
+    }
   }
 
   /**
@@ -694,6 +706,7 @@ class PasswordManager {
     document.getElementById('password').value = '';
     document.getElementById('url').value = '';
     document.getElementById('notes').value = '';
+    document.getElementById('totpSecret').value = '';
   }
 
   /**
@@ -705,10 +718,11 @@ class PasswordManager {
     document.getElementById('password').value = password.password || '';
     document.getElementById('url').value = password.url || '';
     document.getElementById('notes').value = password.notes || '';
+    document.getElementById('totpSecret').value = password.totpSecret || '';
   }
 
   /**
-   * Save password
+   * Save password (including TOTP secret)
    */
   async savePassword() {
     if (!this.isAuthenticated) {
@@ -721,10 +735,20 @@ class PasswordManager {
     const password = document.getElementById('password').value.trim();
     const url = document.getElementById('url').value.trim();
     const notes = document.getElementById('notes').value.trim();
+    const totpSecret = document.getElementById('totpSecret').value.trim();
 
-    if (!title || !username || !password) {
-      this.showNotification('Please fill in title, username and password', 'error');
-      return;
+    // If TOTP secret is provided, only title is required
+    if (totpSecret) {
+      if (!title) {
+        this.showNotification('Please fill in title', 'error');
+        return;
+      }
+    } else {
+      // If no TOTP secret, require title, username and password
+      if (!title || !username || !password) {
+        this.showNotification('Please fill in title, username and password', 'error');
+        return;
+      }
     }
 
     const passwordData = {
@@ -733,6 +757,7 @@ class PasswordManager {
       password,
       url,
       notes,
+      totpSecret,
       createdAt: new Date().toISOString()
     };
 
@@ -757,7 +782,7 @@ class PasswordManager {
   }
 
   /**
-   * Copy password to clipboard
+   * Copy password or TOTP code to clipboard
    */
   async copyPassword(passwordId) {
     if (!this.isAuthenticated) {
@@ -769,10 +794,29 @@ class PasswordManager {
     if (!password) return;
 
     try {
-      await window.otools.writeClipboard(password.password);
-      this.showNotification('Password copied to clipboard!', 'success');
+      let contentToCopy;
+      let notificationMessage;
+
+      // If TOTP secret exists, copy TOTP code instead of password
+      if (password.totpSecret) {
+        const totpCode = this.getTotpCode(password.totpSecret);
+        if (totpCode && totpCode !== 'Invalid' && totpCode !== 'N/A') {
+          contentToCopy = totpCode;
+          notificationMessage = 'TOTP code copied to clipboard!';
+        } else {
+          this.showNotification('Invalid TOTP secret', 'error');
+          return;
+        }
+      } else {
+        // Copy password if no TOTP secret
+        contentToCopy = password.password;
+        notificationMessage = 'Password copied to clipboard!';
+      }
+
+      await window.otools.writeClipboard(contentToCopy);
+      this.showNotification(notificationMessage, 'success');
     } catch (error) {
-      this.showNotification('Failed to copy password', 'error');
+      this.showNotification('Failed to copy to clipboard', 'error');
     }
   }
 
@@ -903,6 +947,45 @@ class PasswordManager {
       return encrypted;
     }));
     await window.otools.setDbValue(this.DB_NAME, this.PASSWORDS_KEY, encryptedPasswords);
+  }
+
+  /**
+   * Get current TOTP code using plugin.generateTotp from preload
+   */
+  getTotpCode(secret) {
+    try {
+      if (!window.plugin || typeof window.plugin.generateTotp !== 'function') return 'N/A';
+      const code = window.plugin.generateTotp(secret);
+      return code || 'Invalid';
+    } catch (e) {
+      return 'Invalid';
+    }
+  }
+
+  /**
+   * Get seconds remaining for current TOTP code
+   */
+  getTotpRemaining() {
+    const step = 30;
+    const now = Math.floor(Date.now() / 1000);
+    return step - (now % step);  
+  }
+
+  /**
+   * Start TOTP timer to update codes and countdown
+   */
+  startTotpTimer(passwords) {
+    if (this._totpInterval) clearInterval(this._totpInterval);
+    this._totpInterval = setInterval(() => {
+      passwords.forEach(p => {
+        if (p.totpSecret) {
+          const codeElem = document.getElementById(`totp-code-${p.id}`);
+          const timerElem = document.getElementById(`totp-timer-${p.id}`);
+          if (codeElem) codeElem.textContent = this.getTotpCode(p.totpSecret);
+          if (timerElem) timerElem.textContent = this.getTotpRemaining() + 's';
+        }
+      });
+    }, 1000);
   }
 }
 
