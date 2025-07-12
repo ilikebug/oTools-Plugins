@@ -6,6 +6,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('plugin', {
     getplatformName: () => {
-        return process.platform
+        return process.platform;
     },
   });

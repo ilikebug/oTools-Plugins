@@ -365,7 +365,7 @@ html, body {
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 0.9rem;
-  z-index: 1001;
+  z-index: 10010; /* 保证通知永远在所有弹窗之上 */
   animation: slideIn 0.3s ease-out;
 }
 
@@ -394,4 +394,90 @@ html, body {
   .modal-footer {
     padding: 12px 16px;
   }
+}
+
+/* Master Password Dialog - 强化遮罩和居中效果 */
+.master-password-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+}
+
+.master-password-dialog .dialog-content {
+  background: #fff;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  padding: 24px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+  text-align: center;
+}
+
+.master-password-dialog h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.master-password-dialog p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.master-password-dialog .form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.master-password-dialog .form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.master-password-dialog .form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+
+.master-password-dialog .form-group input:focus {
+  border-color: var(--main-color);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+.master-password-dialog .dialog-buttons {
+  margin-top: 24px;
+}
+
+.master-password-dialog .btn-primary {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 120px;
+}
+
+.master-password-dialog .btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37,99,235,0.3);
 } 

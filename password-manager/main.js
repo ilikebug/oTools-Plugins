@@ -6,9 +6,13 @@ class PasswordManager {
   constructor() {
     this.DB_NAME = 'password_db';
     this.PASSWORDS_KEY = 'passwords';
+    this.MASTER_PASSWORD_KEY = 'master_password_hash';
+    this.SALT_KEY = 'salt';
     this.passwordList = [];
     this.currentEditId = null;
     this.searchKeyword = '';
+    this.isAuthenticated = false;
+    this.masterPassword = null;
 
     this.init();
   }
@@ -17,8 +21,194 @@ class PasswordManager {
    * Initialize the plugin
    */
   async init() {
-    // Load passwords from database
-    this.passwordList = await this.getPasswords();
+    // Check if master password is set
+    const hasMasterPassword = await this.checkMasterPassword();
+    
+    if (hasMasterPassword) {
+      // Show master password dialog
+      this.showMasterPasswordDialog();
+    } else {
+      // First time setup - create master password
+      this.showSetupMasterPasswordDialog();
+    }
+  }
+
+  /**
+   * Check if master password exists
+   */
+  async checkMasterPassword() {
+    const result = await window.otools.getDbValue(this.DB_NAME, this.MASTER_PASSWORD_KEY);
+    return result && result.success && result.value;
+  }
+
+  /**
+   * Show master password setup dialog
+   */
+  showSetupMasterPasswordDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'master-password-dialog';
+    dialog.innerHTML = `
+      <div class="dialog-content">
+        <h3>Set Master Password</h3>
+        <p>This is your first time using the password manager. Please set a master password to protect all your passwords.</p>
+        <div class="form-group">
+          <label for="masterPassword">Master Password</label>
+          <input type="password" id="masterPassword" placeholder="Enter master password...">
+        </div>
+        <div class="form-group">
+          <label for="confirmMasterPassword">Confirm Master Password</label>
+          <input type="password" id="confirmMasterPassword" placeholder="Enter master password again...">
+        </div>
+        <div class="dialog-buttons">
+          <button class="btn-primary" id="setupMasterPassword">Set Master Password</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Bind events
+    document.getElementById('setupMasterPassword').addEventListener('click', () => {
+      this.setupMasterPassword();
+    });
+    
+    // Handle Enter key
+    const inputs = dialog.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.setupMasterPassword();
+        }
+      });
+    });
+  }
+
+  /**
+   * Show master password dialog
+   */
+  showMasterPasswordDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'master-password-dialog';
+    dialog.innerHTML = `
+      <div class="dialog-content">
+        <h3>Enter Master Password</h3>
+        <p>Please enter your master password to unlock the password manager.</p>
+        <div class="form-group">
+          <label for="masterPassword">Master Password</label>
+          <input type="password" id="masterPassword" placeholder="Enter master password...">
+        </div>
+        <div class="dialog-buttons">
+          <button class="btn-primary" id="unlockMasterPassword">Unlock</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // Bind events
+    document.getElementById('unlockMasterPassword').addEventListener('click', () => {
+      this.unlockMasterPassword();
+    });
+    
+    // Handle Enter key
+    const input = dialog.querySelector('input');
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.unlockMasterPassword();
+      }
+    });
+    
+    input.focus();
+  }
+
+  /**
+   * Setup master password
+   */
+  async setupMasterPassword() {
+    const masterPassword = document.getElementById('masterPassword').value;
+    const confirmPassword = document.getElementById('confirmMasterPassword').value;
+    
+    if (!masterPassword || masterPassword.length < 6) {
+      this.showNotification('Master password must be at least 6 characters', 'error');
+      return;
+    }
+    
+    if (masterPassword !== confirmPassword) {
+      this.showNotification('Passwords do not match', 'error');
+      return;
+    }
+    
+    try {
+      // Generate salt and hash
+      const salt = this.generateSalt();
+      const hash = await this.hashPassword(masterPassword, salt);
+      
+      // Save master password hash and salt
+      await window.otools.setDbValue(this.DB_NAME, this.MASTER_PASSWORD_KEY, hash);
+      await window.otools.setDbValue(this.DB_NAME, this.SALT_KEY, salt);
+      
+      // Remove dialog and initialize
+      document.querySelector('.master-password-dialog').remove();
+      this.masterPassword = masterPassword;
+      this.isAuthenticated = true;
+      this.initializeAfterAuth();
+      
+      this.showNotification('Master password set successfully!', 'success');
+    } catch (error) {
+      this.showNotification('Failed to set master password', 'error');
+    }
+  }
+
+  /**
+   * Unlock with master password
+   */
+  async unlockMasterPassword() {
+    const masterPassword = document.getElementById('masterPassword').value;
+    
+    if (!masterPassword) {
+      this.showNotification('Please enter master password', 'error');
+      return;
+    }
+    
+    try {
+      // Get stored hash and salt
+      const hashResult = await window.otools.getDbValue(this.DB_NAME, this.MASTER_PASSWORD_KEY);
+      const saltResult = await window.otools.getDbValue(this.DB_NAME, this.SALT_KEY);
+      
+      if (!hashResult.success || !saltResult.success) {
+        this.showNotification('Master password verification failed', 'error');
+        return;
+      }
+      
+      const storedHash = hashResult.value;
+      const salt = saltResult.value;
+      
+      // Verify password
+      const inputHash = await this.hashPassword(masterPassword, salt);
+      
+      if (inputHash === storedHash) {
+        // Remove dialog and initialize
+        document.querySelector('.master-password-dialog').remove();
+        this.masterPassword = masterPassword;
+        this.isAuthenticated = true;
+        this.initializeAfterAuth();
+        
+        this.showNotification('Unlocked successfully!', 'success');
+      } else {
+        this.showNotification('Incorrect master password', 'error');
+        document.getElementById('masterPassword').value = '';
+      }
+    } catch (error) {
+      this.showNotification('Verification failed', 'error');
+    }
+  }
+
+  /**
+   * Initialize after authentication
+   */
+  async initializeAfterAuth() {
+    // Load encrypted passwords from database
+    this.passwordList = await this.getEncryptedPasswords();
     
     // Render password list
     this.renderPasswordList();
@@ -28,8 +218,118 @@ class PasswordManager {
     
     // Auto save passwords
     setInterval(() => {
-      this.savePasswords();
+      this.saveEncryptedPasswords();
     }, 5000);
+  }
+
+  /**
+   * Generate random salt
+   */
+  generateSalt() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * Hash password with salt
+   */
+  async hashPassword(password, salt) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password + salt);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  /**
+   * Encrypt data with AES
+   */
+  async encryptData(data, password) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+    
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      true,
+      ['encrypt']
+    );
+    
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encodedData = encoder.encode(JSON.stringify(data));
+    
+    const encryptedContent = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      encodedData
+    );
+    
+    return {
+      encrypted: Array.from(new Uint8Array(encryptedContent)),
+      iv: Array.from(iv),
+      salt: Array.from(salt)
+    };
+  }
+
+  /**
+   * Decrypt data with AES
+   */
+  async decryptData(encryptedData, password) {
+    try {
+      const encoder = new TextEncoder();
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+      );
+      
+      const key = await crypto.subtle.deriveKey(
+        {
+          name: 'PBKDF2',
+          salt: new Uint8Array(encryptedData.salt),
+          iterations: 100000,
+          hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['decrypt']
+      );
+      
+      const decryptedContent = await crypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: new Uint8Array(encryptedData.iv)
+        },
+        key,
+        new Uint8Array(encryptedData.encrypted)
+      );
+      
+      const decoder = new TextDecoder();
+      return JSON.parse(decoder.decode(decryptedContent));
+    } catch (error) {
+      console.error('Decryption failed:', error);
+      return null;
+    }
   }
 
   /**
@@ -40,6 +340,7 @@ class PasswordManager {
     const searchInput = document.querySelector('.top-bar input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
+        if (!this.isAuthenticated) return;
         this.searchKeyword = e.target.value.trim().toLowerCase();
         this.renderPasswordList();
       });
@@ -49,6 +350,10 @@ class PasswordManager {
     const addBtn = document.querySelector('.add-btn');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
+        if (!this.isAuthenticated) {
+          this.showNotification('Please unlock the password manager first', 'error');
+          return;
+        }
         this.showAddModal();
       });
     }
@@ -85,8 +390,8 @@ class PasswordManager {
 
     // Save password
     if (saveBtn) {
-      saveBtn.addEventListener('click', () => {
-        this.savePassword();
+      saveBtn.addEventListener('click', async () => {
+        await this.savePassword();
       });
     }
 
@@ -109,10 +414,10 @@ class PasswordManager {
     // Handle Enter key in modal
     const modalInputs = modal.querySelectorAll('input, textarea');
     modalInputs.forEach(input => {
-      input.addEventListener('keydown', (e) => {
+      input.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter' && e.target.type !== 'textarea') {
           e.preventDefault();
-          this.savePassword();
+          await this.savePassword();
         }
       });
     });
@@ -125,6 +430,11 @@ class PasswordManager {
     document.addEventListener('keydown', (e) => {
       // Don't handle keyboard events when modal is open
       if (document.getElementById('passwordModal').classList.contains('show')) {
+        return;
+      }
+
+      // Don't handle keyboard events when not authenticated
+      if (!this.isAuthenticated) {
         return;
       }
 
@@ -153,6 +463,10 @@ class PasswordManager {
         case 'n':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
+            if (!this.isAuthenticated) {
+              this.showNotification('Please unlock the password manager first', 'error');
+              return;
+            }
             this.showAddModal();
           }
           break;
@@ -181,6 +495,12 @@ class PasswordManager {
     const mainContent = document.querySelector('.main-content');
     if (!mainContent) return;
 
+    // Check if authenticated
+    if (!this.isAuthenticated) {
+      mainContent.innerHTML = `<div class="empty">Please unlock the password manager first</div>`;
+      return;
+    }
+
     let filteredPasswords = this.passwordList;
     
     // Filter by search keyword
@@ -194,7 +514,7 @@ class PasswordManager {
     }
 
     if (filteredPasswords.length === 0) {
-      const emptyMessage = this.searchKeyword ? 'No passwords found.' : 'No passwords yet. Click + to add one.';
+      const emptyMessage = this.searchKeyword ? 'No passwords found' : 'No passwords yet. Click + to add one.';
       mainContent.innerHTML = `<div class="empty">${emptyMessage}</div>`;
       return;
     }
@@ -286,6 +606,11 @@ class PasswordManager {
    * Show add password modal
    */
   showAddModal() {
+    if (!this.isAuthenticated) {
+      this.showNotification('Please unlock the password manager first', 'error');
+      return;
+    }
+    
     this.currentEditId = null;
     this.clearModalForm();
     document.getElementById('modalTitle').textContent = 'Add New Password';
@@ -297,6 +622,11 @@ class PasswordManager {
    * Show edit password modal
    */
   showEditModal(passwordId) {
+    if (!this.isAuthenticated) {
+      this.showNotification('Please unlock the password manager first', 'error');
+      return;
+    }
+    
     const password = this.passwordList.find(p => p.id === passwordId);
     if (!password) return;
 
@@ -340,7 +670,12 @@ class PasswordManager {
   /**
    * Save password
    */
-  savePassword() {
+  async savePassword() {
+    if (!this.isAuthenticated) {
+      this.showNotification('Please unlock the password manager first', 'error');
+      return;
+    }
+
     const title = document.getElementById('title').value.trim();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
@@ -348,7 +683,7 @@ class PasswordManager {
     const notes = document.getElementById('notes').value.trim();
 
     if (!title || !username || !password) {
-      this.showNotification('Please fill in title, username and password.', 'error');
+      this.showNotification('Please fill in title, username and password', 'error');
       return;
     }
 
@@ -385,45 +720,31 @@ class PasswordManager {
    * Copy password to clipboard
    */
   async copyPassword(passwordId) {
+    if (!this.isAuthenticated) {
+      this.showNotification('Please unlock the password manager first', 'error');
+      return;
+    }
+
     const password = this.passwordList.find(p => p.id === passwordId);
     if (!password) return;
 
     try {
       await window.otools.writeClipboard(password.password);
       this.showNotification('Password copied to clipboard!', 'success');
-      
-      // Auto paste after a short delay
-      setTimeout(() => {
-        this.pastePassword();
-      }, 100);
     } catch (error) {
-      this.showNotification('Failed to copy password.', 'error');
+      this.showNotification('Failed to copy password', 'error');
     }
-  }
-
-  /**
-   * Paste password
-   */
-  async pastePassword() {
-    const pos = await window.otools.getMousePosition();
-    if (pos && pos.success) {
-      await window.otools.simulateMouse('click', 
-        { x: pos.x, y: pos.y, button: 'left' }); 
-    }
-    let modifiers = ['command'];
-    if (window.plugin.getplatformName() === 'win32' ||
-        window.plugin.getplatformName() === 'linux') {
-      modifiers = ['control'];
-    }
-    setTimeout(() => {
-      window.otools.simulateKeyboard('keyTap', { key: 'v', modifiers });
-    }, 100);
   }
 
   /**
    * Delete password
    */
   deletePassword(passwordId) {
+    if (!this.isAuthenticated) {
+      this.showNotification('Please unlock the password manager first', 'error');
+      return;
+    }
+
     if (confirm('Are you sure you want to delete this password?')) {
       this.passwordList = this.passwordList.filter(p => p.id !== passwordId);
       this.renderPasswordList();
@@ -521,6 +842,34 @@ class PasswordManager {
    */
   async savePasswords() {
     await window.otools.setDbValue(this.DB_NAME, this.PASSWORDS_KEY, this.passwordList);
+  }
+
+  /**
+   * Get encrypted passwords from database
+   */
+  async getEncryptedPasswords() {
+    const result = await window.otools.getDbValue(this.DB_NAME, this.PASSWORDS_KEY);
+    if (result && result.success && result.value) {
+      // Decrypt the passwords
+      const decryptedPasswords = await Promise.all(result.value.map(async (encryptedPassword) => {
+        const decrypted = await this.decryptData(encryptedPassword, this.masterPassword);
+        return decrypted;
+      }));
+      return decryptedPasswords;
+    }
+    return [];
+  }
+
+  /**
+   * Save encrypted passwords to database
+   */
+  async saveEncryptedPasswords() {
+    // Encrypt the passwords before saving
+    const encryptedPasswords = await Promise.all(this.passwordList.map(async (password) => {
+      const encrypted = await this.encryptData(password, this.masterPassword);
+      return encrypted;
+    }));
+    await window.otools.setDbValue(this.DB_NAME, this.PASSWORDS_KEY, encryptedPasswords);
   }
 }
 
