@@ -2,7 +2,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-// 启动编译后的应用
+// Start the compiled application
 const electronPath = require('electron');
 const appPath = path.join(__dirname);
 

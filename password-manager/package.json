@@ -12,7 +12,9 @@
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "watch": "webpack --mode development --watch",
-    "build:plugin": "npm run build && node build.js"
+    "build:plugin": "npm run build && node build.js",
+    "clear-cache": "node clear-cache.js",
+    "clean": "npm run clear-cache && npm install && npm run build:plugin"
   },
   "dependencies": {
     "otplib": "^12.0.1",

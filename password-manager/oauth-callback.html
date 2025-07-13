@@ -42,37 +42,41 @@
     
     const messageElement = document.getElementById('message');
     
+    // Function to send message to opener
+    function sendMessageToOpener(type, data) {
+      if (window.opener) {
+        try {
+          window.opener.postMessage({ type: type, ...data }, '*');
+        } catch (error) {
+          // Handle error silently
+        }
+        
+        // Also try to close the window after a short delay
+        setTimeout(() => {
+          try {
+            if (!window.closed) {
+              window.close();
+            }
+          } catch (error) {
+            // Handle error silently
+          }
+        }, 1000);
+      }
+    }
+    
     if (error) {
       messageElement.textContent = 'Authorization failed: ' + error;
       messageElement.className = 'error';
-      
-      // Send error message to parent window
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'GOOGLE_AUTH_ERROR',
-          error: error
-        }, '*');
-      }
+      sendMessageToOpener('GOOGLE_AUTH_ERROR', { error: error });
     } else if (code) {
       messageElement.textContent = 'Authorization successful! You can close this window.';
       messageElement.className = 'success';
-      
-      // Send success message to parent window
-      if (window.opener) {
-        window.opener.postMessage({
-          type: 'GOOGLE_AUTH_SUCCESS',
-          code: code
-        }, '*');
-      }
+      sendMessageToOpener('GOOGLE_AUTH_SUCCESS', { code: code });
     } else {
       messageElement.textContent = 'Invalid authorization response';
       messageElement.className = 'error';
+      sendMessageToOpener('GOOGLE_AUTH_ERROR', { error: 'Invalid authorization response' });
     }
-    
-    // Close window after 2 seconds
-    setTimeout(() => {
-      window.close();
-    }, 2000);
   </script>
 </body>
 </html> 
