@@ -1,0 +1,19 @@
+{
+  "name": "screenshot-ocr",
+  "version": "1.0.0",
+  "description": "Screenshot OCR recognition plugin",
+  "author": "oTools",
+  "icon": "icon.png",
+  "shortName": "OCR",
+  "type": "ocr",
+  "ui": {
+    "html": "index.html",
+    "title": "Screenshot OCR Result",
+    "width": 900,
+    "height": 600
+  },
+  "startupMode": "independent",
+  "enabled": true,
+  "dir": "/Users/y.zhang/Library/Application Support/oTools/plugins/screenshot-ocr",
+  "loadedAt": "2025-07-07T07:00:04.736Z"
+}

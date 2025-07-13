@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Drive Authorization</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f6fa;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+    .success {
+      color: #10b981;
+    }
+    .error {
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="message">Processing authorization...</div>
+  </div>
+
+  <script>
+    // Parse URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const error = urlParams.get('error');
+    
+    const messageElement = document.getElementById('message');
+    
+    if (error) {
+      messageElement.textContent = 'Authorization failed: ' + error;
+      messageElement.className = 'error';
+      
+      // Send error message to parent window
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'GOOGLE_AUTH_ERROR',
+          error: error
+        }, '*');
+      }
+    } else if (code) {
+      messageElement.textContent = 'Authorization successful! You can close this window.';
+      messageElement.className = 'success';
+      
+      // Send success message to parent window
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'GOOGLE_AUTH_SUCCESS',
+          code: code
+        }, '*');
+      }
+    } else {
+      messageElement.textContent = 'Invalid authorization response';
+      messageElement.className = 'error';
+    }
+    
+    // Close window after 2 seconds
+    setTimeout(() => {
+      window.close();
+    }, 2000);
+  </script>
+</body>
+</html> 

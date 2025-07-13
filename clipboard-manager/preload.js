@@ -1,0 +1,1 @@
+(()=>{var r={482:r=>{"use strict";r.exports=require("electron")}},e={};const{contextBridge:t,ipcRenderer:o}=function t(o){var n=e[o];if(void 0!==n)return n.exports;var p=e[o]={exports:{}};return r[o](p,p.exports,t),p.exports}(482);t.exposeInMainWorld("plugin",{getplatformName:()=>process.platform})})();

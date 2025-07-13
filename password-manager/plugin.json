@@ -1,0 +1,21 @@
+{
+  "name": "password-manager",
+  "shortName": "Password",
+  "version": "1.0.0",
+  "description": "A secure password manager for oTools with AES-256 encryption, master password protection, and auto-paste functionality.",
+  "author": "oTools",
+  "icon": "icon.png",
+  "type": "password",
+  "ui": {
+    "html": "index.html",
+    "title": "Password Manager",
+    "width": 400,
+    "height": 480,
+    "frame": false,
+    "hideOnBlur": true
+  },
+  "startupMode": "dependent",
+  "popupAtCursor": true,
+  "enabled": true,
+  "debug": false
+}
