@@ -15,5 +15,6 @@
   "startupMode": "independent",
   "enabled": true,
   "dir": "/Users/y.zhang/Library/Application Support/oTools/plugins/screenshot-ocr",
-  "loadedAt": "2025-07-07T07:00:04.736Z"
+  "loadedAt": "2025-07-07T07:00:04.736Z",
+  "debug": false
 }
