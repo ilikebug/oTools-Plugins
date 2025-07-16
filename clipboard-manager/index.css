@@ -101,7 +101,7 @@ html, body {
 .clip-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* gap: 10px; */
   min-height: 48px;
 }
 .clip-item {
@@ -117,6 +117,8 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
+  /* Add bottom margin for spacing between items */
+  margin-bottom: 10px;
 }
 .clip-item.selected, .clip-item:hover {
   background: #f3f4f6;
@@ -189,7 +191,7 @@ html, body {
   z-index: 10;
 } 
 
-/* 选中星标等icon可用主色填充 */
+/* Use primary color fill for selected star and similar icons */
 .btn-fav.selected {
   color: #ffd600;
 } 
