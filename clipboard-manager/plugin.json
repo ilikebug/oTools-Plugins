@@ -19,5 +19,5 @@
   "enabled": true,
   "dir": "/Users/zhangye/Library/Application Support/oTools/plugins/clipboard-manager",
   "loadedAt": "2025-07-08T12:50:11.418Z",
-  "debug": false
+  "debug": true
 }
